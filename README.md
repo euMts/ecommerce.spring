@@ -6,6 +6,10 @@ Aplicação de exemplo de **e-commerce** em **Spring Boot** com **Java 17**, cat
 
 O projeto continua sendo uma única aplicação para facilitar a demonstração em sala, mas cada etapa do fluxo de compra foi exposta como um endpoint próprio. A comunicação entre as etapas acontece via HTTP, usando o `PurchaseOrchestrationService` como orquestrador.
 
+## Vídeo
+
+Explicação do sistema: [https://youtu.be/NMkr6jsFADA](https://youtu.be/NMkr6jsFADA)
+
 ## Objetivo
 
 O objetivo da implementação é representar, dentro de um único projeto, um cenário que normalmente seria dividido em vários serviços independentes.
