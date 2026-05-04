@@ -1,0 +1,23 @@
+{
+  "name": "Ecommerce Spring",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "overrideCommand": true,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-spring-boot"
+      ],
+      "settings": {
+        "java.import.maven.enabled": true
+      }
+    }
+  },
+  "forwardPorts": [8081],
+  "portsAttributes": {
+    "8081": { "label": "Spring Boot" }
+  },
+  "postCreateCommand": "chmod +x mvnw && ./mvnw -B -q dependency:resolve"
+}

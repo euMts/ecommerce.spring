@@ -1,0 +1,320 @@
+{
+	"info": {
+		"name": "ecommerce.spring",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "ecommerceSpringBaseUrl",
+			"value": "http://localhost:8081"
+		},
+		{
+			"key": "productId",
+			"value": "REPLACE_WITH_PRODUCT_ID"
+		},
+		{
+			"key": "orderId",
+			"value": "REPLACE_WITH_ORDER_ID"
+		},
+		{
+			"key": "transactionId",
+			"value": "REPLACE_WITH_TRANSACTION_ID"
+		},
+		{
+			"key": "invoiceNumber",
+			"value": "REPLACE_WITH_INVOICE_NUMBER"
+		},
+		{
+			"key": "trackingCode",
+			"value": "REPLACE_WITH_TRACKING_CODE"
+		}
+	],
+	"item": [
+		{
+			"name": "General",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{ecommerceSpringBaseUrl}}/"
+					},
+					"response": []
+				},
+				{
+					"name": "Product catalog",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": "{{ecommerceSpringBaseUrl}}/api/products"
+					},
+					"response": []
+				},
+				{
+					"name": "Postal code address lookup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"postalCode\": \"85901158\"\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/addresses/postal-code"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Orchestrated checkout",
+			"item": [
+				{
+					"name": "Confirm checkout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cart\": {\n    \"{{productId}}\": {\n      \"id\": \"{{productId}}\",\n      \"name\": \"Bluetooth headphones\",\n      \"price\": 199.99,\n      \"qty\": 1\n    }\n  },\n  \"payment\": {\n    \"cardHolderName\": \"Matheus\",\n    \"cardNumber\": \"4111111111111111\",\n    \"expiry\": \"12/30\",\n    \"cvv\": \"123\"\n  },\n  \"delivery\": {\n    \"street\": \"Rua\",\n    \"number\": \"100\",\n    \"complement\": \"Apt 1\",\n    \"neighborhood\": \"Bairro\",\n    \"city\": \"Cidade\",\n    \"state\": \"SC\",\n    \"postalCode\": \"01310-100\"\n  }\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/checkout/confirm"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Distributed checkout steps",
+			"item": [
+				{
+					"name": "1. Validate input",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cart\": {\n    \"{{productId}}\": {\n      \"id\": \"{{productId}}\",\n      \"name\": \"Bluetooth headphones\",\n      \"price\": 199.99,\n      \"qty\": 1\n    }\n  },\n  \"payment\": {\n    \"cardHolderName\": \"Matheus\",\n    \"cardNumber\": \"4111111111111111\",\n    \"expiry\": \"12/30\",\n    \"cvv\": \"123\"\n  },\n  \"delivery\": {\n    \"street\": \"Rua\",\n    \"number\": \"100\",\n    \"complement\": \"Apt 1\",\n    \"neighborhood\": \"Bairro\",\n    \"city\": \"Cidade\",\n    \"state\": \"SC\",\n    \"postalCode\": \"01310-100\"\n  }\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/validate-input"
+					},
+					"response": []
+				},
+				{
+					"name": "2. Calculate total",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"{{productId}}\": {\n    \"id\": \"{{productId}}\",\n    \"name\": \"Bluetooth headphones\",\n    \"price\": 199.99,\n    \"qty\": 1\n  }\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/calculate-total"
+					},
+					"response": []
+				},
+				{
+					"name": "3. Validate stock",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"{{productId}}\": {\n    \"id\": \"{{productId}}\",\n    \"name\": \"Bluetooth headphones\",\n    \"price\": 199.99,\n    \"qty\": 1\n  }\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/validate-stock"
+					},
+					"response": []
+				},
+				{
+					"name": "4. Create order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"total\": 199.99\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/orders"
+					},
+					"response": []
+				},
+				{
+					"name": "5. Send order confirmation email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"total\": 199.99,\n  \"delivery\": {\n    \"street\": \"Rua\",\n    \"number\": \"100\",\n    \"complement\": \"Apt 1\",\n    \"neighborhood\": \"Bairro\",\n    \"city\": \"Cidade\",\n    \"state\": \"SC\",\n    \"postalCode\": \"01310-100\"\n  }\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/emails/order-confirmation"
+					},
+					"response": []
+				},
+				{
+					"name": "6. Process payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"total\": 199.99,\n  \"payment\": {\n    \"cardHolderName\": \"Matheus\",\n    \"cardNumber\": \"4111111111111111\",\n    \"expiry\": \"12/30\",\n    \"cvv\": \"123\"\n  }\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/payments"
+					},
+					"response": []
+				},
+				{
+					"name": "7. Send payment result email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"transactionId\": \"{{transactionId}}\"\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/emails/payment-result"
+					},
+					"response": []
+				},
+				{
+					"name": "8. Issue invoice and reduce stock",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"cart\": {\n    \"{{productId}}\": {\n      \"id\": \"{{productId}}\",\n      \"name\": \"Bluetooth headphones\",\n      \"price\": 199.99,\n      \"qty\": 1\n    }\n  }\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/invoices"
+					},
+					"response": []
+				},
+				{
+					"name": "9. Send invoice email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"invoiceNumber\": \"{{invoiceNumber}}\"\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/emails/invoice"
+					},
+					"response": []
+				},
+				{
+					"name": "10. Hand off to carrier",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"delivery\": {\n    \"street\": \"Rua\",\n    \"number\": \"100\",\n    \"complement\": \"Apt 1\",\n    \"neighborhood\": \"Bairro\",\n    \"city\": \"Cidade\",\n    \"state\": \"SC\",\n    \"postalCode\": \"01310-100\"\n  }\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/shipments"
+					},
+					"response": []
+				},
+				{
+					"name": "11. Send shipping email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"trackingCode\": \"{{trackingCode}}\"\n}"
+						},
+						"url": "{{ecommerceSpringBaseUrl}}/api/distributed/checkout/emails/shipping"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

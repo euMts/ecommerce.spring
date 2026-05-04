@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>E-commerce • Catálogo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --gap: 14px; --radius: 16px; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#f6f7f9; color:#121417; }
+    header { position: sticky; top:0; z-index: 10; backdrop-filter: blur(6px); background: rgba(255,255,255,.75); border-bottom:1px solid #e6e8ec; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 14px; }
+    .bar { display:flex; align-items:center; gap: var(--gap); flex-wrap: wrap; }
+    h1 { font-size: 20px; margin: 0; }
+    .spacer { flex: 1; }
+    input[type="search"] { padding: 10px 12px; border:1px solid #d7dbe1; border-radius: 999px; min-width: 220px; outline: none; }
+    select { padding: 10px 12px; border:1px solid #d7dbe1; border-radius: 10px; background: white; }
+    .pill { display:inline-flex; align-items:center; gap:8px; background:#121417; color:#fff; padding:8px 12px; border-radius:999px; font-weight:600; border:0; font: inherit; cursor:pointer; }
+    .pill:focus-visible { outline: 2px solid #0f62fe; outline-offset: 2px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--gap); padding: var(--gap); }
+    .card { background:#fff; border:1px solid #e6e8ec; border-radius: var(--radius); overflow:hidden; display:flex; flex-direction:column; transition: transform .08s ease, box-shadow .08s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+    .thumb { width: 100%; aspect-ratio: 4/3; object-fit: cover; background:#fafbfc; }
+    .content { padding: 12px; display:flex; flex-direction:column; gap:8px; }
+    .title { font-weight: 600; line-height: 1.3; }
+    .price { font-size: 18px; font-weight: 700; }
+    .stock { font-size: 12px; color:#586070; }
+    .row { display:flex; align-items:center; gap:8px; }
+    .btn { border:0; background:#0f62fe; color:white; padding:10px 12px; border-radius: 10px; cursor:pointer; font-weight:600; font: inherit; }
+    .btn.secondary { background:#e6e8ec; color:#121417; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .muted { color:#8a93a3; }
+    .empty { text-align:center; padding: 32px; color:#586070; }
+    footer { text-align:center; color:#8a93a3; padding: 18px; }
+    .badge { display:inline-block; min-width: 20px; padding: 2px 6px; text-align:center; background:#ff6b6b; color:#fff; border-radius: 999px; font-size: 12px; font-weight:700; }
+    .loading { padding: 18px; }
+    .err { color:#b00020; padding: 18px; }
+    dialog.cart-dialog { border:1px solid #e6e8ec; border-radius: var(--radius); padding: 0; max-width: min(520px, 94vw); width: 100%; box-shadow: 0 12px 40px rgba(0,0,0,.12); }
+    dialog.cart-dialog::backdrop { background: rgba(18,20,23,.35); }
+    .dialog-inner { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .dialog-head h2 { margin: 0; font-size: 18px; }
+    .dialog-close { border: 0; background: transparent; color: #586070; font: inherit; cursor: pointer; text-decoration: underline; }
+    #cartLines { font-size: 14px; max-height: 220px; overflow: auto; }
+    .cart-line { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eef0f3; }
+    .cart-total { font-weight: 700; padding-top: 4px; }
+    .dialog-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .cart-feedback { font-size: 14px; padding: 8px; border-radius: 10px; background: #f0f4f8; }
+    .cart-feedback.ok { background: #e8f5e9; color: #1b5e20; }
+    .cart-feedback.err { background: #ffebee; color: #b71c1c; }
+    .cart-steps { font-size: 12px; color: #586070; margin-bottom: 4px; }
+    .checkout-form { display: flex; flex-direction: column; gap: 12px; max-height: min(52vh, 420px); overflow: auto; padding-right: 4px; }
+    .checkout-form fieldset {
+      border: 0;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .checkout-form legend { font-size: 14px; font-weight: 700; margin: 0; color: #121417; }
+    .checkout-form .field { display: flex; flex-direction: column; gap: 4px; }
+    .checkout-form .field-row > div { display: flex; flex-direction: column; gap: 4px; }
+    .checkout-form label { font-size: 12px; font-weight: 600; color: #383f4d; }
+    .checkout-form input { width: 100%; padding: 8px 10px; border: 1px solid #d7dbe1; border-radius: 8px; font: inherit; box-sizing: border-box; }
+    .checkout-form .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .checkout-form .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    @media (max-width: 400px) {
+      .checkout-form .field-row, .checkout-form .field-row-3 { grid-template-columns: 1fr; }
+    }
+    .cep-lookup-msg { font-size: 12px; min-height: 1.2em; display: block; margin-top: 4px; color: #586070; }
+    .cep-lookup-msg.err { color: #b71c1c; }
+    .cep-lookup-msg.ok { color: #1b5e20; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap bar">
+      <h1>Minha Loja</h1>
+      <div class="spacer"></div>
+      <input id="q" type="search" placeholder="Buscar produtos…" />
+      <select id="ord">
+        <option value="">Ordenar</option>
+        <option value="price_asc">Preço: menor → maior</option>
+        <option value="price_desc">Preço: maior → menor</option>
+        <option value="name_asc">Nome: A → Z</option>
+        <option value="name_desc">Nome: Z → A</option>
+      </select>
+      <button type="button" class="pill" id="cartBtn" title="Itens no carrinho">
+        🛒 Carrinho <span id="cartCount" class="badge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="status" class="loading muted">Carregando catálogo…</div>
+    <section id="grid" class="grid" hidden></section>
+    <div id="empty" class="empty" hidden>Nenhum produto encontrado.</div>
+    <div id="error" class="err" hidden>Não foi possível carregar o catálogo.</div>
+  </main>
+
+  <footer>© <span id="year"></span> Minha Loja</footer>
+
+  <dialog id="cartDialog" class="cart-dialog" aria-labelledby="cartTitle">
+    <div class="dialog-inner">
+      <div class="dialog-head">
+        <h2 id="cartTitle">Seu carrinho</h2>
+        <button type="button" class="dialog-close" id="cartClose">Fechar</button>
+      </div>
+      <div id="cartStepHint" class="cart-steps" aria-live="polite"></div>
+      <div id="cartStepSummary">
+        <div id="cartLines"></div>
+        <div id="cartTotal" class="cart-total"></div>
+      </div>
+      <div id="cartCheckoutPanel" hidden>
+        <form id="checkoutForm" class="checkout-form">
+          <div id="cartStepPayment" hidden>
+            <fieldset>
+              <legend>Pagamento</legend>
+              <div class="field">
+                <label for="payCardHolder">Nome no cartão</label>
+                <input id="payCardHolder" name="cardHolderName" type="text" autocomplete="cc-name" placeholder="Matheus" />
+              </div>
+              <div class="field">
+                <label for="payCardNumber">Número do cartão</label>
+                <input id="payCardNumber" name="cardNumber" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="4111111111111111" maxlength="19" />
+              </div>
+              <div class="field-row">
+                <div>
+                  <label for="payExpiry">Validade</label>
+                  <input id="payExpiry" name="expiry" type="text" autocomplete="cc-exp" placeholder="MM/AA ou MM/AAAA" maxlength="7" />
+                </div>
+                <div>
+                  <label for="payCvv">CVV</label>
+                  <input id="payCvv" name="cvv" type="text" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4" />
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div id="cartStepAddress" hidden>
+            <fieldset>
+              <legend>Entrega</legend>
+              <div class="field">
+                <label for="delPostal">CEP</label>
+                <input id="delPostal" name="postalCode" type="text" autocomplete="postal-code" placeholder="01310-100" inputmode="numeric" maxlength="9" />
+                <span id="cepLookupFeedback" class="cep-lookup-msg" aria-live="polite"></span>
+              </div>
+              <div class="field-row">
+                <div>
+                  <label for="delStreet">Logradouro</label>
+                  <input id="delStreet" name="street" type="text" autocomplete="street-address" placeholder="Rua" />
+                </div>
+                <div>
+                  <label for="delNumber">Número</label>
+                  <input id="delNumber" name="number" type="text" autocomplete="address-line2" placeholder="100" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="delComplement">Complemento</label>
+                <input id="delComplement" name="complement" type="text" autocomplete="address-line3" placeholder="Apt 1" />
+              </div>
+              <div class="field">
+                <label for="delNeighborhood">Bairro</label>
+                <input id="delNeighborhood" name="neighborhood" type="text" placeholder="Bairro" />
+              </div>
+              <div class="field-row">
+                <div>
+                  <label for="delCity">Cidade</label>
+                  <input id="delCity" name="city" type="text" autocomplete="address-level2" placeholder="Cidade" />
+                </div>
+                <div>
+                  <label for="delState">UF</label>
+                  <input id="delState" name="state" type="text" autocomplete="address-level1" placeholder="SC" maxlength="2" />
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </form>
+      </div>
+      <div id="cartFeedback" class="cart-feedback" hidden></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn secondary" id="cartBackCheckout" hidden>Voltar</button>
+        <button type="button" class="btn secondary" id="cartClear">Limpar carrinho</button>
+        <button type="button" class="btn" id="cartContinue">Continuar</button>
+        <button type="button" class="btn" id="cartSubmitCheckout" hidden>Finalizar compra</button>
+      </div>
+    </div>
+  </dialog>
+
+  <template id="cardTmpl">
+    <article class="card">
+      <img class="thumb" loading="lazy" alt="">
+      <div class="content">
+        <div class="title"></div>
+        <div class="row">
+          <div class="price"></div>
+          <div class="stock"></div>
+        </div>
+        <button type="button" class="btn addBtn">Adicionar ao carrinho</button>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    const API_ORIGIN = location.port === "8081" ? ""
+        : `${location.protocol}//${location.hostname}:8081`;
+    const API_PRODUCTS = `${API_ORIGIN}/api/products`;
+    const API_CHECKOUT_CONFIRM = `${API_ORIGIN}/api/checkout/confirm`;
+    const API_POSTAL_LOOKUP = `${API_ORIGIN}/api/addresses/postal-code`;
+
+    const grid = document.getElementById("grid");
+    const statusEl = document.getElementById("status");
+    const errorEl = document.getElementById("error");
+    const emptyEl = document.getElementById("empty");
+    const q = document.getElementById("q");
+    const ord = document.getElementById("ord");
+    const cartCount = document.getElementById("cartCount");
+    const cardTmpl = document.getElementById("cardTmpl");
+    const cartBtn = document.getElementById("cartBtn");
+    const cartDialog = document.getElementById("cartDialog");
+    const cartLines = document.getElementById("cartLines");
+    const cartTotal = document.getElementById("cartTotal");
+    const cartFeedback = document.getElementById("cartFeedback");
+    const cartClear = document.getElementById("cartClear");
+    const cartContinue = document.getElementById("cartContinue");
+    const cartSubmitCheckout = document.getElementById("cartSubmitCheckout");
+    const cartBackCheckout = document.getElementById("cartBackCheckout");
+    const cartClose = document.getElementById("cartClose");
+    const cartStepSummary = document.getElementById("cartStepSummary");
+    const cartCheckoutPanel = document.getElementById("cartCheckoutPanel");
+    const cartStepPayment = document.getElementById("cartStepPayment");
+    const cartStepAddress = document.getElementById("cartStepAddress");
+    const cartStepHint = document.getElementById("cartStepHint");
+    const checkoutForm = document.getElementById("checkoutForm");
+    const delPostal = document.getElementById("delPostal");
+    const cepLookupFeedback = document.getElementById("cepLookupFeedback");
+    document.getElementById("year").textContent = new Date().getFullYear();
+    let reloadPageAfterCartClose = false;
+    let checkoutStep = 1;
+
+    const CART_KEY = "cart_items_v2";
+    function getCart() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; } catch { return {}; } }
+    function setCart(c) { localStorage.setItem(CART_KEY, JSON.stringify(c)); updateCartCount(); renderCartDialogContent(); }
+
+    function updateCartCount() {
+      const c = getCart();
+      const total = Object.values(c).reduce((s, it) => s + it.qty, 0);
+      cartCount.textContent = total;
+    }
+
+    const fmtBRL = v => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+    function matchesFilter(p, term) {
+      term = term.trim().toLowerCase();
+      if (!term) return true;
+      return (p.name || "").toLowerCase().includes(term) ||
+             (p.id || "").toLowerCase().includes(term);
+    }
+
+    function sortItems(arr, mode) {
+      const a = [...arr];
+      switch (mode) {
+        case "price_asc":  return a.sort((x,y)=> (x.price ?? 0) - (y.price ?? 0));
+        case "price_desc": return a.sort((x,y)=> (y.price ?? 0) - (x.price ?? 0));
+        case "name_asc":   return a.sort((x,y)=> (x.name||"").localeCompare(y.name||""));
+        case "name_desc":  return a.sort((x,y)=> (y.name||"").localeCompare(x.name||""));
+        default: return a;
+      }
+    }
+
+    function setCheckoutStep(step) {
+      checkoutStep = step;
+      const empty = Object.keys(getCart()).length === 0;
+      if (empty) checkoutStep = 1;
+
+      const onCheckout = checkoutStep === 2 || checkoutStep === 3;
+      cartStepSummary.hidden = checkoutStep !== 1;
+      cartCheckoutPanel.hidden = !onCheckout;
+      cartStepPayment.hidden = checkoutStep !== 2;
+      cartStepAddress.hidden = checkoutStep !== 3;
+      cartBackCheckout.hidden = checkoutStep === 1;
+      cartContinue.hidden = checkoutStep === 3;
+      cartSubmitCheckout.hidden = checkoutStep !== 3;
+      cartClear.disabled = empty || onCheckout;
+
+      const titles = { 1: "Seu carrinho", 2: "Pagamento", 3: "Entrega" };
+      document.getElementById("cartTitle").textContent = titles[checkoutStep] || "Seu carrinho";
+      const hints = {
+        1: "Passo 1 de 3 — revise os itens",
+        2: "Passo 2 de 3 — dados de pagamento",
+        3: "Passo 3 de 3 — endereço de entrega"
+      };
+      cartStepHint.textContent = hints[checkoutStep] || "";
+
+      cartContinue.disabled = empty;
+      cartSubmitCheckout.disabled = empty;
+    }
+
+    function renderCartDialogContent() {
+      const cart = getCart();
+      const entries = Object.values(cart);
+      cartFeedback.hidden = true;
+      cartFeedback.textContent = "";
+      cartFeedback.className = "cart-feedback";
+
+      if (!entries.length) {
+        cartLines.innerHTML = '<p class="muted">Seu carrinho está vazio.</p>';
+        cartTotal.textContent = "";
+        setCheckoutStep(1);
+        return;
+      }
+
+      cartClear.disabled = false;
+      cartLines.innerHTML = "";
+      let sum = 0;
+      for (const it of entries) {
+        const line = (it.price ?? 0) * (it.qty ?? 0);
+        sum += line;
+        const row = document.createElement("div");
+        row.className = "cart-line";
+        row.innerHTML = '<span>' + escapeHtml(it.name || it.id) + ' × ' + it.qty + '</span><span>' + fmtBRL(line) + '</span>';
+        cartLines.appendChild(row);
+      }
+      cartTotal.textContent = "Total: " + fmtBRL(sum);
+      const keepStep = entries.length && (checkoutStep === 2 || checkoutStep === 3);
+      setCheckoutStep(keepStep ? checkoutStep : 1);
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function cartPayloadFromStorage(cartObj) {
+      const cart = {};
+      for (const k of Object.keys(cartObj)) {
+        const v = cartObj[k];
+        cart[k] = { id: v.id, name: v.name, price: v.price, qty: v.qty };
+      }
+      return cart;
+    }
+
+    function buildCheckoutPayload(cartObj) {
+      return {
+        cart: cartPayloadFromStorage(cartObj),
+        payment: {
+          cardHolderName: document.getElementById("payCardHolder").value.trim(),
+          cardNumber: document.getElementById("payCardNumber").value.replace(/\s/g, ""),
+          expiry: document.getElementById("payExpiry").value.trim(),
+          cvv: document.getElementById("payCvv").value.trim()
+        },
+        delivery: {
+          street: document.getElementById("delStreet").value.trim(),
+          number: document.getElementById("delNumber").value.trim(),
+          complement: document.getElementById("delComplement").value.trim(),
+          neighborhood: document.getElementById("delNeighborhood").value.trim(),
+          city: document.getElementById("delCity").value.trim(),
+          state: document.getElementById("delState").value.trim(),
+          postalCode: document.getElementById("delPostal").value.trim()
+        }
+      };
+    }
+
+    async function lookupPostalCodeFromCepField() {
+      const raw = delPostal.value;
+      const digits = raw.replace(/\D/g, "");
+      if (digits.length === 0) {
+        cepLookupFeedback.textContent = "";
+        cepLookupFeedback.className = "cep-lookup-msg";
+        return;
+      }
+      if (digits.length !== 8) {
+        cepLookupFeedback.className = "cep-lookup-msg err";
+        cepLookupFeedback.textContent = "O CEP deve ter 8 dígitos.";
+        return;
+      }
+      cepLookupFeedback.className = "cep-lookup-msg";
+      cepLookupFeedback.textContent = "Buscando CEP…";
+      try {
+        const res = await fetch(API_POSTAL_LOOKUP, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ postalCode: digits })
+        });
+        let data = {};
+        try { data = await res.json(); } catch { }
+        if (!res.ok) {
+          cepLookupFeedback.className = "cep-lookup-msg err";
+          cepLookupFeedback.textContent = data.error || ("Não foi possível consultar o CEP (" + res.status + ").");
+          return;
+        }
+        if (data.postalCode) delPostal.value = data.postalCode;
+        document.getElementById("delStreet").value = data.street || "";
+        document.getElementById("delNeighborhood").value = data.neighborhood || "";
+        document.getElementById("delCity").value = data.city || "";
+        document.getElementById("delState").value = data.state || "";
+        cepLookupFeedback.className = "cep-lookup-msg ok";
+        cepLookupFeedback.textContent = "Endereço encontrado.";
+      } catch (e) {
+        console.error(e);
+        cepLookupFeedback.className = "cep-lookup-msg err";
+        cepLookupFeedback.textContent = "Erro de rede ao consultar o CEP.";
+      }
+    }
+
+    function validateCheckoutForm() {
+      const p = buildCheckoutPayload(getCart());
+      if (!p.payment.cardHolderName) return "Informe o nome no cartão.";
+      if (!p.payment.cardNumber) return "Informe o número do cartão.";
+      if (!p.payment.expiry) return "Informe a validade.";
+      if (!p.payment.cvv) return "Informe o CVV.";
+      if (!p.delivery.street) return "Informe o logradouro.";
+      if (!p.delivery.number) return "Informe o número.";
+      if (!p.delivery.neighborhood) return "Informe o bairro.";
+      if (!p.delivery.city) return "Informe a cidade.";
+      if (!p.delivery.state) return "Informe a UF.";
+      if (!p.delivery.postalCode) return "Informe o CEP.";
+      return null;
+    }
+
+    async function confirmPurchase() {
+      const cart = getCart();
+      if (!Object.keys(cart).length) return;
+
+      const errMsg = validateCheckoutForm();
+      if (errMsg) {
+        cartFeedback.hidden = false;
+        cartFeedback.className = "cart-feedback err";
+        cartFeedback.textContent = errMsg;
+        return;
+      }
+
+      cartFeedback.hidden = false;
+      cartFeedback.className = "cart-feedback";
+      cartFeedback.textContent = "Processando…";
+      cartClear.disabled = true;
+      cartContinue.disabled = true;
+      cartSubmitCheckout.disabled = true;
+      cartBackCheckout.disabled = true;
+
+      try {
+        const res = await fetch(API_CHECKOUT_CONFIRM, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify(buildCheckoutPayload(cart))
+        });
+        let data = {};
+        try { data = await res.json(); } catch { }
+
+        if (!res.ok) {
+          cartFeedback.className = "cart-feedback err";
+          cartFeedback.textContent = data.error || ("Falha na requisição (" + res.status + ")");
+          cartClear.disabled = false;
+          cartContinue.disabled = Object.keys(getCart()).length === 0;
+          cartSubmitCheckout.disabled = Object.keys(getCart()).length === 0;
+          cartBackCheckout.disabled = false;
+          return;
+        }
+
+        setCart({});
+        cartFeedback.className = "cart-feedback ok";
+        cartFeedback.hidden = false;
+        cartFeedback.textContent =
+          "Compra realizada com sucesso!, Total " + fmtBRL(Number(data.total ?? 0)) + ".";
+        reloadPageAfterCartClose = true;
+      } catch (e) {
+        console.error(e);
+        cartFeedback.className = "cart-feedback err";
+        cartFeedback.textContent = "Erro de rede.";
+      } finally {
+        cartClear.disabled = false;
+        const hasItems = Object.keys(getCart()).length > 0;
+        cartContinue.disabled = !hasItems;
+        cartSubmitCheckout.disabled = !hasItems;
+        cartBackCheckout.disabled = false;
+      }
+    }
+
+    function render(products) {
+      grid.innerHTML = "";
+      const term = q.value;
+      const mode = ord.value;
+      const filtered = sortItems(products.filter(p => matchesFilter(p, term)), mode);
+
+      if (!filtered.length) {
+        grid.hidden = true; emptyEl.hidden = false; return;
+      }
+      emptyEl.hidden = true; grid.hidden = false;
+
+      for (const p of filtered) {
+        const node = cardTmpl.content.cloneNode(true);
+        const img = node.querySelector(".thumb");
+        const title = node.querySelector(".title");
+        const price = node.querySelector(".price");
+        const stock = node.querySelector(".stock");
+        const btn = node.querySelector(".addBtn");
+
+        img.src = p.imageUrl || "";
+        img.alt = p.name || "Produto";
+        title.textContent = p.name ?? "(Sem nome)";
+        price.textContent = fmtBRL(Number(p.price ?? 0));
+        stock.textContent = (p.stockQuantity ?? 0) > 0
+          ? "• " + p.stockQuantity + " em estoque"
+          : "• indisponível";
+
+        btn.disabled = (p.stockQuantity ?? 0) <= 0;
+        btn.addEventListener("click", () => {
+          const cart = getCart();
+          const id = p.id || crypto.randomUUID();
+          if (!cart[id]) cart[id] = { id, name: p.name, price: Number(p.price ?? 0), qty: 0 };
+          cart[id].qty = Math.min((cart[id].qty || 0) + 1, Math.max(1, p.stockQuantity ?? 1));
+          setCart(cart);
+          btn.textContent = "Adicionado ✓";
+          setTimeout(()=> btn.textContent = "Adicionar ao carrinho", 1000);
+        });
+
+        grid.appendChild(node);
+      }
+    }
+
+    let cache = [];
+    async function load() {
+      try {
+        statusEl.textContent = "Carregando catálogo…";
+        const res = await fetch(API_PRODUCTS, { headers: { "Accept": "application/json" }});
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        cache = Array.isArray(data) ? data : [];
+        statusEl.textContent = cache.length + " produto(s) carregado(s).";
+        render(cache);
+      } catch (err) {
+        console.error(err);
+        statusEl.hidden = true;
+        errorEl.hidden = false;
+        errorEl.textContent = "Não foi possível carregar o catálogo. Verifique a API e CORS.";
+      } finally {
+        updateCartCount();
+      }
+    }
+
+    cartBtn.addEventListener("click", () => {
+      checkoutStep = 1;
+      renderCartDialogContent();
+      cartDialog.showModal();
+    });
+    cartClose.addEventListener("click", () => cartDialog.close());
+    cartDialog.addEventListener("close", () => {
+      if (reloadPageAfterCartClose) {
+        reloadPageAfterCartClose = false;
+        location.reload();
+      }
+    });
+    cartClear.addEventListener("click", () => {
+      setCart({});
+      checkoutStep = 1;
+      renderCartDialogContent();
+    });
+    cartContinue.addEventListener("click", () => {
+      if (!Object.keys(getCart()).length) return;
+      if (checkoutStep === 1) setCheckoutStep(2);
+      else if (checkoutStep === 2) setCheckoutStep(3);
+    });
+    cartBackCheckout.addEventListener("click", () => {
+      if (checkoutStep === 3) setCheckoutStep(2);
+      else if (checkoutStep === 2) setCheckoutStep(1);
+    });
+    cartSubmitCheckout.addEventListener("click", confirmPurchase);
+    checkoutForm.addEventListener("submit", e => {
+      e.preventDefault();
+      if (!Object.keys(getCart()).length) return;
+      if (checkoutStep === 3) confirmPurchase();
+      else if (checkoutStep === 2) setCheckoutStep(3);
+    });
+    delPostal.addEventListener("blur", () => {
+      if (checkoutStep === 3) lookupPostalCodeFromCepField();
+    });
+    delPostal.addEventListener("focus", () => {
+      cepLookupFeedback.textContent = "";
+      cepLookupFeedback.className = "cep-lookup-msg";
+    });
+    q.addEventListener("input", () => render(cache));
+    ord.addEventListener("change", () => render(cache));
+
+    load();
+  </script>
+</body>
+</html>
